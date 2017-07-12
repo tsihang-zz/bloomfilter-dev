@@ -7,69 +7,74 @@
 #include "oryx.h"
 #include "oryx_bloomfilter.h"
 
-
 static int bf_max_bytes = 10;
-
 
 static __oryx_always_inline__
 uint32_t oryx_fnv_hash (char* str, unsigned int len)  
 {  
-   const unsigned int fnv_prime = 0x811C9DC5;  
-   unsigned int hash      = 0;  
-   unsigned int i         = 0;  
-   for(i = 0; i < len; str++, i++)  
-   {  
-      hash *= fnv_prime;  
-      hash ^= (*str);  
-   }  
-   return hash;
+
+	const unsigned int fnv_prime = 0x811C9DC5;  
+	unsigned int hash      = 0;  
+	unsigned int i         = 0;  
+
+	for(i = 0; i < len; str++, i++) {
+		hash *= fnv_prime;
+		hash ^= (*str);
+	}
+	
+	return hash;
 }  
 
 static __oryx_always_inline__
 uint32_t oryx_fnv1_hash (char* str, unsigned int len)  
 {  
-   const unsigned int fnv_prime = 16777619;  
-   unsigned int hash      = 2166136261L;  
-   unsigned int i         = 0;  
-   for(i = 0; i < len; str++, i++)  
-   {  
-      hash *= fnv_prime;  
-      hash ^= (*str);  
-   }  
 
-   hash += hash << 13;
-   hash ^= hash >> 7;
-   hash += hash << 3;
-   hash ^= hash >> 17;
-   hash += hash << 5;
-   
-   return hash;  
+	const unsigned int fnv_prime = 16777619;  
+	unsigned int hash      = 2166136261L;  
+	unsigned int i         = 0;  
+
+	for(i = 0; i < len; str++, i++) {
+		hash *= fnv_prime;
+		hash ^= (*str);
+	}  
+	
+	hash += hash << 13;
+	hash ^= hash >> 7;
+	hash += hash << 3;
+	hash ^= hash >> 17;
+	hash += hash << 5;
+	
+	return hash;  
 }  
 
 
 static __oryx_always_inline__
 uint32_t oryx_sdbm_hash (char* str, unsigned int len)  
-{  
-   unsigned int hash = 0;  
-   unsigned int i    = 0;  
-   for(i = 0; i < len; str++, i++)  
-   {  
-      hash = (*str) + (hash << 6) + (hash << 16) - hash;  
-   }  
-   return hash;  
+{
+
+	unsigned int hash = 0;
+	unsigned int i    = 0;
+	
+	for(i = 0; i < len; str++, i++) {
+		hash = (*str) + (hash << 6) + (hash << 16) - hash;
+	}
+
+	return hash;  
 }  
 
 static __oryx_always_inline__
 uint32_t oryx_bkdr_hash (char* str, unsigned int len)  
-{  
-   unsigned int seed = 131; /* 31 131 1313 13131 131313 etc.. */  
-   unsigned int hash = 0;  
-   unsigned int i    = 0;  
-   for(i = 0; i < len; str++, i++)  
-   {  
-      hash = (hash * seed) + (*str);  
-   }  
-   return hash;  
+{
+
+	unsigned int seed = 131; /* 31 131 1313 13131 131313 etc.. */  
+	unsigned int hash = 0;  
+	unsigned int i    = 0;  
+
+	for(i = 0; i < len; str++, i++) {  
+		hash = (hash * seed) + (*str);  
+	}
+	
+	return hash;  
 }  
 
 #if 0
@@ -101,6 +106,7 @@ int bf_calc_size (int __oryx_unused__ array_type)
 
 struct oryx_bloom_filter *bf_new (const char *bfdesc, int maxobjs)
 {
+
 	struct oryx_bloom_filter *bf = NULL;
 
 	bf = malloc (sizeof (struct oryx_bloom_filter));
@@ -135,11 +141,11 @@ int bf_at (struct oryx_bloom_filter *bf, uint32_t h)
 static __oryx_always_inline__
 void bf_dump_byte (int index, uint8_t val)
 {
+
 	int j = 0;
 	uint8_t b;
 	char *y = CONSOLE_PRINT_CLOR_LYELLOW;
 	char *r = CONSOLE_PRINT_CLOR_LWHITE;
-
 
 	val ? printf ("Byte%s[%010d] --> "CONSOLE_PRINT_CLOR_FIN"", r, index) :\
 		printf ("Byte[%010d] --> ", index);
@@ -148,12 +154,13 @@ void bf_dump_byte (int index, uint8_t val)
 		b = ((val >> (7 - j)) & 0x01);
 		b ? printf ("%s%d "CONSOLE_PRINT_CLOR_FIN"", y, b) : printf ("%d ", b);
 	}
+
 	printf ("\n");
-	
 }
 
 void bf_dump_array (struct oryx_bloom_filter *bf)
 {
+
 	int i = 0;
 	uint8_t *v = (uint8_t *)bf->m;
 
@@ -161,6 +168,7 @@ void bf_dump_array (struct oryx_bloom_filter *bf)
 	for (i = 0; i < bf->nelmts; i ++) {
 		bf_dump_byte (i, v[i]);
 	}
+
 	printf ("\n");
 }
 
@@ -225,7 +233,7 @@ int bf_query (struct oryx_bloom_filter *bf, void *data, size_t s)
 	
 	for (i = 0; i < bf->k; i ++) {
 
-		if (!result) 	return 0;
+		if (!result) return 0;
 
 		h = HASH_FUNC(bf, i)(data, s);
 		result = bf_get ((uint8_t *)bf->m, bf_at(bf, h));

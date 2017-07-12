@@ -12,7 +12,6 @@
 typedef uint32_t (*hashfunc_ptr)(char *data, unsigned int s);
 
 struct hash {
-	
 	const char *desc;
 	hashfunc_ptr func;
 } ;
@@ -26,18 +25,12 @@ n: map bits
 struct oryx_bloom_filter {
 	
 	const char *bloom_filter;
-
 	int	max;
-
 	int k;
-
 	void *m;	/** Bit array */
 	int nelmts;	/**  */
-
 	int n;	/** Mapping maximum objects number. */
-
 	struct hash hash [MAX_HASH_FUNS]; 
-	
 };
 
 #define HASH_INIT(hash, f)\
@@ -49,4 +42,3 @@ struct oryx_bloom_filter {
 
 
 #endif
-
