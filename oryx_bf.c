@@ -5,7 +5,7 @@
  */
 
 #include "oryx.h"
-#include "oryx_bloomfilter.h"
+#include "oryx_bf.h"
 
 static int bf_max_bytes = 10;
 
