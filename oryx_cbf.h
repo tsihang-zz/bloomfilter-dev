@@ -1,11 +1,11 @@
-/*   oryx_bf.h
+/*   oryx_cbf.h
  *   Created by TSIHANG <qh_soledadboy@sina.com>>
  *   12 July, 2017
  *   Personal.Q
  */
  
-#ifndef __ORYX_BF_H__
-#define __ORYX_BF_H__
+#ifndef __ORYX_CBF_H__
+#define __ORYX_CBF_H__
 
 #define MAX_HASH_FUNS	4
 
@@ -22,7 +22,7 @@ k: hash count.
 m: inserted elements.
 n: map bits
 */
-struct oryx_bf_t {
+struct oryx_cbf_t { /** Counting Bloom Filter */
 	
 	const char *bf_desc;
 	int	max;
@@ -40,10 +40,6 @@ struct oryx_bf_t {
 #define HASH_DESC(bf,i) ((&bf->hash[i])->desc)
 #define HASH_FUNC(bf,i) ((&bf->hash[i])->func)
 
-
-extern struct oryx_bf_t *bf_new (const char *bfdesc, int maxobjs);
-extern int bf_add (struct oryx_bf_t *bf, void *data, size_t s);
-extern int bf_query (struct oryx_bf_t *bf, void *data, size_t s);
-extern void bf_dump_array (struct oryx_bf_t *bf);
+extern struct oryx_cbf_t *cbf_new (const char *bf_desc, int bf_max_objs);
 
 #endif

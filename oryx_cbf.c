@@ -1,13 +1,14 @@
-/*   oryx_bloomfilter.c
+/*   oryx_cbf.c
  *   Created by TSIHANG <qh_soledadboy@sina.com>>
  *   12 July, 2017
  *   Personal.Q
  */
 
 #include "oryx.h"
-#include "oryx_bf.h"
+#include "oryx_cbf.h"
 
-static int bf_max_bytes = 10;
+static int cbf_max_bytes = 10;
+static const int cbf_count_bits = 4;
 
 static __oryx_always_inline__
 uint32_t oryx_fnv_hash (char* str, unsigned int len)  
@@ -77,43 +78,16 @@ uint32_t oryx_bkdr_hash (char* str, unsigned int len)
 	return hash;  
 }  
 
-#if 0
-/* $array_type: 8-bits, 16-bits, 32-bits. default is 8-bits; */
-static __oryx_always_inline__
-int bf_calc_size (int __oryx_unused__ array_type)
+struct oryx_cbf_t *cbf_new (const char *bf_desc, int bf_max_objs)
 {
 
-	int bits = 8;
-	int nelems;
+	struct oryx_cbf_t *bf = NULL;
 
-	/**
-		if (array_type == CHAR)
-			bits = 8;
-		else if (array_type == SHORT)
-			bits = 16;
-		else
-			bits = 32;
-	*/
-
-	nelems = bf_max_bits / bits;
-
-	if ((bf_max_bits % bits) != 0)
-		nelems += 1;
-	
-	return nelems;
-}
-#endif
-
-struct oryx_bf_t *bf_new (const char *bfdesc, int maxobjs)
-{
-
-	struct oryx_bf_t *bf = NULL;
-
-	bf = malloc (sizeof (struct oryx_bf_t));
+	bf = malloc (sizeof (struct oryx_cbf_t));
 	if (likely (bf)) {
-		bf->bf_desc = strdup (bfdesc);
+		bf->bf_desc = strdup (bf_desc);
 
-		bf->max = maxobjs;
+		bf->max = bf_max_objs;
 
 		HASH_INIT(&bf->hash[0], oryx_fnv_hash);
 		HASH_INIT(&bf->hash[1], oryx_fnv1_hash);
@@ -122,7 +96,7 @@ struct oryx_bf_t *bf_new (const char *bfdesc, int maxobjs)
 
 		bf->k = 4;
 
-		bf->nelmts = bf_max_bytes;
+		bf->nelmts = cbf_max_bytes;
 		bf->m = malloc (bf->nelmts);
 		memset (bf->m, 0, bf->nelmts);
 	}
@@ -132,14 +106,14 @@ struct oryx_bf_t *bf_new (const char *bfdesc, int maxobjs)
 }
 
 static __oryx_always_inline__
-int bf_at (struct oryx_bf_t *bf, uint32_t h)
+int cbf_at (struct oryx_cbf_t *bf, uint32_t h)
 {
 	uint32_t max_bits = bf->nelmts * 8;
 	return h % max_bits;
 }
 
 static __oryx_always_inline__
-void bf_dump_byte (int index, uint8_t val)
+void cbf_dump_byte (int index, uint8_t val)
 {
 
 	int j = 0;
@@ -158,7 +132,7 @@ void bf_dump_byte (int index, uint8_t val)
 	printf ("\n");
 }
 
-void bf_dump_array (struct oryx_bf_t *bf)
+void cbf_dump_array (struct oryx_cbf_t *bf)
 {
 
 	int i = 0;
@@ -166,14 +140,14 @@ void bf_dump_array (struct oryx_bf_t *bf)
 
 	printf ("\n\nTotal %d elements\n", bf->nelmts);
 	for (i = 0; i < bf->nelmts; i ++) {
-		bf_dump_byte (i, v[i]);
+		cbf_dump_byte (i, v[i]);
 	}
 
 	printf ("\n");
 }
 
 static __oryx_always_inline__
-void bf_set (uint8_t *array, uint32_t offset) 
+void cbf_set (uint8_t *array, uint32_t offset) 
 {
 
 	uint8_t byte = 0;
@@ -191,7 +165,7 @@ void bf_set (uint8_t *array, uint32_t offset)
 }
 
 static __oryx_always_inline__
-int bf_get (uint8_t *array, uint32_t offset) 
+int cbf_get (uint8_t *array, uint32_t offset) 
 {
 
 	uint8_t byte = 0;
@@ -206,7 +180,7 @@ int bf_get (uint8_t *array, uint32_t offset)
 	return (byte >> offset_bit) & 0x01;
 }
 
-int bf_add (struct oryx_bf_t *bf, void *data, size_t s)
+int cbf_add (struct oryx_cbf_t *bf, void *data, size_t s)
 {
 
 	uint32_t h;
@@ -218,13 +192,13 @@ int bf_add (struct oryx_bf_t *bf, void *data, size_t s)
 
 		h = HASH_FUNC(bf, i)(data, s);
 		//printf ("h(%s)=%u, @ offset (%d, %d) %d\n", HASH_DESC(bf, i), h, bf_at(bf, h) / 8, bf_at(bf, h) % 8, bf_at(bf, h));
-		bf_set ((uint8_t *)bf->m, bf_at(bf, h));
+		cbf_set ((uint8_t *)bf->m, cbf_at(bf, h));
 	}
 
 	return 0;
 }
 
-int bf_query (struct oryx_bf_t *bf, void *data, size_t s)
+int cbf_query (struct oryx_cbf_t *bf, void *data, size_t s)
 {
 
 	uint32_t h;
@@ -236,7 +210,7 @@ int bf_query (struct oryx_bf_t *bf, void *data, size_t s)
 		if (!result) return 0;
 
 		h = HASH_FUNC(bf, i)(data, s);
-		result = bf_get ((uint8_t *)bf->m, bf_at(bf, h));
+		result = cbf_get ((uint8_t *)bf->m, cbf_at(bf, h));
 		/* printf ("result = %d,   h(%s)=%u, @ offset (%d, %d) %d\n", result
 			HASH_DESC(bf, i), h, bf_at(bf, h) / 8, bf_at(bf, h) % 8, bf_at(bf, h)); */
 	}
